@@ -12,5 +12,8 @@ STEP 2:
 Run the following command:
 pip install -r requirements.txt
 
+STEP 3:
+Run startup_script.py
+
 # NOTICE
 NB: The program is not tested on MAC and Linux but it should work.
