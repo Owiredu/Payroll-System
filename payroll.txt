@@ -1,0 +1,26 @@
+Attendance is marked with the when the users face is recognized
+Absceteeism attract a deduction of GHC 1.20 from the basic salary
+The payroll will be calculated as:
+
+Basic salary
+
+Allowances
+1. Overtime
+2. Rent 
+3. Spouse
+
+Total allowances = 1 + 2+3
+
+Deductions
+4.Absenteeism
+5. SSNIT 
+6. Welfare
+
+SSNIT = (14.5 / 100) x basic salary
+
+Total deduction = 4 +5+6
+
+Gross salary = Basic salary + Total Allowances + Total deduction 
+
+Net salary = Basic salary + Total allowances
+Payroll will then be printed
