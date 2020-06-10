@@ -73,6 +73,7 @@ class Payroll(QMainWindow):
         Switches view to dashboard
         """
         self.ui.app_stackedwidget.setCurrentWidget(self.ui.dashboard_page)
+        self.dashboard_init()
 
     def switch_to_employees(self):
         """
@@ -98,6 +99,90 @@ class Payroll(QMainWindow):
     def dashboard_init(self):
         """
         Initializes all the items in the dashboard
+        """
+        # load the summary data
+        self.dashboard_load_summary_data()
+        # load the receipts table
+        self.dashboard_load_payments_table()
+
+    def dashboard_connect_widgets_to_actions(self):
+        """
+        Connects widgets in the tax section to their respective actions
+        """
+        pass
+
+    def dashboard_load_summary_data(self):
+        """
+        Loads the data to be placed in the cards on the dashboard
+        """
+        try:
+            db_conn = DbConnection()
+            cursor = db_conn.connection.cursor()
+            # select all the employees data
+            result = cursor.execute(
+                "SELECT * FROM employees ORDER BY EMPLOYEE_ID;")
+            data = result.fetchall()
+            # get and set the card values
+            num_of_employees = 0
+            total_monthly_tax = 0.0
+            total_gross_salary = 0.0
+            total_employee_allowance = 0.0
+            total_ssnit = 0.0
+            total_net_employee_salary = 0.0
+            for row in data:
+                # get the gross salary and total allowances
+                gross_salary = row[7]
+                total_allowance = row[8]
+                # find gross salary minus total allowances
+                net_salary_with_tax_and_ssnit = gross_salary - total_allowance
+                # find the tax
+                tax = self.get_tax(net_salary_with_tax_and_ssnit)
+                # find the gross salary minus tax and total allowances
+                net_salary_with_ssnit = net_salary_with_tax_and_ssnit - tax
+                # find the ssnit
+                ssnit = 0.145 * (net_salary_with_ssnit)
+                # find the net salary
+                net_salary = net_salary_with_ssnit - ssnit
+                # update totals
+                num_of_employees += 1
+                total_monthly_tax += tax
+                total_gross_salary += gross_salary
+                total_employee_allowance += total_allowance
+                total_ssnit += ssnit
+                total_net_employee_salary += net_salary
+                # enhance smoothness
+                QApplication.processEvents()
+            # display the data on the cards
+            self.dashboard_display_card_data(num_of_employees, total_monthly_tax, total_gross_salary,
+                                             total_employee_allowance, total_ssnit, total_net_employee_salary)
+            # close the cursor and database connection
+            cursor.close()
+            db_conn.close_connection()
+        except:
+            # show error message
+            QMessageBox.critical(
+                self, 'Error', 'Failed to load dashboard data!')
+
+    def dashboard_display_card_data(self, num_of_employees, total_monthly_tax, total_gross_salary,
+                                    total_employee_allowance, total_ssnit, total_net_employee_salary):
+        """
+        Displays the data on the dashboard cards
+        """
+        self.ui.dashboard_num_of_employees_label.setText(str(num_of_employees))
+        self.ui.dashboard_total_monthly_tax_label.setText(
+            '{0:.2f}'.format(total_monthly_tax))
+        self.ui.dashboard_total_gross_salary_label.setText(
+            '{0:.2f}'.format(total_gross_salary))
+        self.ui.dashboard_total_allowance_label.setText(
+            '{0:.2f}'.format(total_employee_allowance))
+        self.ui.dashboard_total_ssnit_label.setText(
+            '{0:.2f}'.format(total_ssnit))
+        self.ui.dashboard_total_net_salary_label.setText(
+            '{0:.2f}'.format(total_net_employee_salary))
+
+    def dashboard_load_payments_table(self):
+        """
+        Loads the payment receipts table
         """
         pass
 
@@ -344,9 +429,16 @@ class Payroll(QMainWindow):
         ### START OF SALARY CALCULATIONS ###
         gross_salary = row[7]
         total_allowance = row[8]
-        tax = self.get_tax(gross_salary)
-        ssnit = 0.145 * (gross_salary - total_allowance - tax)
-        net_salary = gross_salary - ssnit
+        # find gross salary minus total allowances
+        net_salary_with_tax_and_ssnit = gross_salary - total_allowance
+        # find the tax
+        tax = self.get_tax(net_salary_with_tax_and_ssnit)
+        # find the gross salary minus tax and total allowances
+        net_salary_with_ssnit = net_salary_with_tax_and_ssnit - tax
+        # find the ssnit
+        ssnit = 0.145 * (net_salary_with_ssnit)
+        # find the net salary
+        net_salary = net_salary_with_ssnit - ssnit
         ### END OF SALARY CALCULATIONS ###
         item_gross_salary = QTableWidgetItem(
             '{0:.2f}'.format(gross_salary))
