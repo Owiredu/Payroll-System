@@ -89,10 +89,10 @@ class SendEmail(QThread):
                 self.progress_message.emit("success")
             except:
                 # send message dispatch error signal
-                self.error_message.emit("dispatch_failure")
+                self.error_message.emit("failure")
         except:
             # send connection failure error
-            self.error_message.emit("connection_failure")
+            self.error_message.emit("failure")
 
     def close_smtp(self):
         """

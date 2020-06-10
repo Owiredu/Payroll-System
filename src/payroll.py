@@ -80,6 +80,7 @@ class Payroll(QMainWindow):
         Switches view to employees page
         """
         self.ui.app_stackedwidget.setCurrentWidget(self.ui.employees_page)
+        self.clear_email_notification()
 
     def switch_to_admin(self):
         """
@@ -184,7 +185,51 @@ class Payroll(QMainWindow):
         """
         Loads the payment receipts table
         """
-        pass
+        self.ui.dashboard_recent_payment_receipts_tablewidget.setRowCount(0)
+        try:
+            db_conn = DbConnection()
+            cursor = db_conn.connection.cursor()
+            # select all the employees data
+            result = cursor.execute(
+                "SELECT * FROM payment_receipts ORDER BY PAYMENT_ID DESC;")
+            data = result.fetchall()
+            # insert payment data into the table widget
+            for i, row in enumerate(data):
+                self.dashboard_add_row_to_tablewidget(i, row)
+            # close the cursor and database connection
+            cursor.close()
+            db_conn.close_connection()
+        except:
+            # show error message
+            QMessageBox.critical(
+                self, 'Error', 'Failed to load payments receipts data!')
+
+    def dashboard_add_row_to_tablewidget(self, row_index, row):
+        """
+        Adds a row to the dashboard tablewidget
+        """
+        # create an empty row
+        self.ui.dashboard_recent_payment_receipts_tablewidget.insertRow(
+            row_index)
+        # create the items to add to the cells
+        item_payment_id = QTableWidgetItem(str(row[0]))
+        item_transaction_time = QTableWidgetItem(row[1])
+        item_recipients = QTableWidgetItem(row[2])
+        item_total_amount = QTableWidgetItem('{0:.2f}'.format(row[3]))
+        # make rows uneditable
+        item_payment_id.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+        item_transaction_time.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+        item_recipients.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+        item_total_amount.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+        # insert the items into the cells
+        self.ui.dashboard_recent_payment_receipts_tablewidget.setItem(
+            row_index, 0, item_payment_id)
+        self.ui.dashboard_recent_payment_receipts_tablewidget.setItem(
+            row_index, 1, item_transaction_time)
+        self.ui.dashboard_recent_payment_receipts_tablewidget.setItem(
+            row_index, 2, item_recipients)
+        self.ui.dashboard_recent_payment_receipts_tablewidget.setItem(
+            row_index, 3, item_total_amount)
 
     ######### Employee Functions #########
 
@@ -714,13 +759,26 @@ class Payroll(QMainWindow):
         """
         Monitors the progress and success of the email
         """
-        print(msg)
+        if msg.startswith('Sending'):
+            self.ui.email_notif_label.setText(msg)
+        else:
+            self.ui.email_notif_label.setStyleSheet(
+                'background-color: rgb(99, 255, 117);')
+            self.ui.email_notif_label.setText(
+                'Notification sent successfully!')
 
     def email_error_monitor(self, msg):
         """
         Monitors the errors encountered in sending the email
         """
-        print(msg)
+        self.ui.email_notif_label.setStyleSheet(
+            'background-color: rgb(255, 128, 119);')
+        self.ui.email_notif_label.setText('Failed to send email notification!')
+
+    def clear_email_notification(self):
+        self.ui.email_notif_label.setStyleSheet(
+            'background-color: rgb(193, 193, 193);')
+        self.ui.email_notif_label.setText('')
 
     ######### Admin Functions #########
 
